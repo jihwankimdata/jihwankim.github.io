@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="I asked AI for a calculated column inside a Direct Lake fact table and it created one in an import dimension instead. The documented reason sits in the Direct Lake comparison table: only unmaterialized user-context calculated columns are allowed on Direct Lake tables. Plus the refresh error that demands an explicit cloud connection.">
+    <meta name="keywords" content="Direct Lake, calculated column, calculated table, composite model, TMDL, OneLake, explicit connection, fixed identity, Power BI, Microsoft Fabric, DevOps, AI, semantic model">
+    <meta name="author" content="Jihwan Kim">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.workers.dev; frame-src 'self'">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:title" content="I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead | Jihwan Kim">
+    <meta property="og:description" content="The agent routed my calculated column to an import dimension, the service greyed out New column, and the refresh demanded an explicit connection. One documented rule, seen from three angles.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://powerbimvp.com/posts/direct-lake-calculated-columns-where-they-live.html">
+    <meta property="og:image" content="https://powerbimvp.com/images/blog/direct-lake-calculated-columns-where-they-live/featured.png">
+    <meta property="og:image:alt" content="A folk-art illustration of a person on the shore tossing a note that arcs away from a large white ox standing in a lake and lands on a small brown ox on dry land, suggesting a calculated column that cannot attach to a Direct Lake table and goes to an import table instead">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead">
+    <meta name="twitter:description" content="The agent routed my calculated column to an import dimension, the service greyed out New column, and the refresh demanded an explicit connection. One documented rule, three angles.">
+    <meta name="twitter:image" content="https://powerbimvp.com/images/blog/direct-lake-calculated-columns-where-they-live/featured.png">
+    <meta name="twitter:image:alt" content="A folk-art illustration of a person tossing a note that arcs away from a white ox standing in a lake and lands on a brown ox on dry land">
+
+    <title>I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead | Jihwan Kim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/article.css">
+</head>
+<body>
+    <a href="#article" class="skip-link">Skip to content</a>
+    <div class="reading-progress" id="reading-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+    <div class="lightbox-overlay" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Close image viewer">
+            <span class="material-symbols-outlined">close</span> Close
+        </button>
+        <img id="lightbox-image" src="" alt="">
+    </div>
+
+    <header class="site-header" id="site-header"></header>
+
+    <main class="article-layout" id="article">
+        <div class="toc-mobile">
+            <button class="toc-mobile-toggle" id="toc-mobile-toggle">
+                On this page <span class="material-symbols-outlined">expand_more</span>
+            </button>
+            <div class="toc-mobile-content" id="toc-mobile-content">
+                <div id="toc-mobile-list"></div>
+            </div>
+        </div>
+
+        <article>
+            <a href="../index.html" class="back-link">
+                <span class="material-symbols-outlined">arrow_back</span> All posts
+            </a>
+
+            <header class="article-header">
+                <div class="article-meta-top">
+                    <span class="difficulty-badge difficulty-badge--intermediate">Intermediate</span>
+                    <span class="reading-time"><span class="material-symbols-outlined">schedule</span> 10 min read</span>
+                </div>
+                <h1 class="article-title">I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead</h1>
+                <div class="article-meta">
+                    <time datetime="2026-07-04">
+                        <span class="material-symbols-outlined">calendar_month</span> July 4, 2026
+                    </time>
+                    <span class="article-meta-separator"></span>
+                    <div class="article-meta-tags">
+                        <span class="tag" data-tag="Power BI">Power BI</span>
+                        <span class="tag" data-tag="Direct Lake">Direct Lake</span>
+                        <span class="tag" data-tag="TMDL">TMDL</span>
+                        <span class="tag" data-tag="DevOps">DevOps</span>
+                        <span class="tag" data-tag="AI">AI</span>
+                    </div>
+                    <span class="article-meta-separator"></span>
+                    <span class="article-readers" id="article-reader-count">
+                        <span class="material-symbols-outlined">visibility</span>
+                        <span id="reader-count-number">&mdash;</span> readers
+                        <span class="counter-since">counter started July 4, 2026</span>
+                    </span>
+                </div>
+            </header>
+
+            <img class="featured-image" src="../images/blog/direct-lake-calculated-columns-where-they-live/featured.png" alt="A folk-art illustration of a person on the shore tossing a note that arcs away from a large white ox standing in a lake and lands on a small brown ox on dry land, suggesting a calculated column that cannot attach to a Direct Lake table and goes to an import table instead">
+
+            <div class="article-content">
+
+                <p>In this writing, I want to share how asking AI for a calculated column inside a Direct Lake fact table taught me where calculated objects are allowed to live in a composite model, and what the Power BI service demands before it agrees to refresh them.</p>
+
+                <p>The plan was deliberate. In <a href="power-bi-desktop-bridge-claude-edit-verify.html">my previous post</a> I set up the <strong>Power BI Desktop Bridge</strong> loop, where an agent authors the on-disk TMDL and PBIR files and the open Desktop window reloads to show the result. This time I pointed that loop at a <strong>storage mode</strong> boundary. My <code>directlake_import_composite</code> model keeps the <code>sales</code> fact table in <strong>Direct Lake</strong> mode and the dimension tables in Import mode, and I asked the agent for two things on a new Insights page: a calculated table that references the fact table, and a calculated column inside the fact table. I kept the prompt loose on purpose, because I wanted to see the agent's design decisions rather than dictate them. The calculated table appeared. The calculated column appeared too, but not in the table I named.</p>
+
+                <h2>1. One Direct Lake Fact Table, Four Import Dimensions</h2>
+
+                <p>The model sits in my Contoso workspace, fed by a lakehouse. The <code>sales</code> fact table reads its Delta table through Direct Lake, and the <code>date</code>, <code>product</code>, <code>store</code>, and <code>customer</code> dimensions are Import tables loaded through the SQL analytics endpoint. This is the <strong>composite model</strong> pattern I first walked through in <a href="building-hybrid-semantic-models-tabular-editor.html">my hybrid semantic models post</a>: the large fact table stays in the lake with no copy inside the model, while the smaller dimension tables are loaded into the model the classic way.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/workspace-lineage.png" alt="The Contoso workspace lineage view, with the lakehouse feeding the directlake_import_composite semantic model and the contoso_project report" loading="lazy">
+
+                <p>Direct Lake comes in two forms, and the difference decides everything in this post. The "Power Query connectors" section of the Microsoft Learn article <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-develop?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Develop Direct Lake semantic models</a> explains the quickest way to tell them apart: a Direct Lake on OneLake model uses the Azure Data Lake Storage connector in its shared expression, while a Direct Lake on SQL model uses the SQL Server connector. My <code>expressions.tmdl</code> leaves no doubt.</p>
+
+<img src="../images/blog/direct-lake-calculated-columns-where-they-live/expressions-tmdl-vscode.png" alt="The expressions.tmdl file open in VS Code, with the AzureStorage.DataLake connector highlighted in the DirectLake - Lakehouse_Contoso shared expression" loading="lazy">
+
+                <p>This is <strong>Direct Lake on OneLake</strong>. That matters because the "Comparison of storage modes" table in the <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Direct Lake overview</a> marks composite models as supported only for the OneLake flavor. Only Direct Lake on OneLake allows Direct Lake tables and Import tables to live together in one semantic model. With Direct Lake on SQL, a model like mine, one Direct Lake fact table plus four Import dimensions, is not possible.</p>
+
+                <p>In Desktop, hovering over each table confirms the split. The <code>sales</code> table reports its storage mode as Direct Lake, and the dimensions report Import.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/desktop-model-sales-directlake.png" alt="Power BI Desktop model view with the sales table tooltip showing Storage mode Direct Lake and the six measures highlighted" loading="lazy">
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/desktop-model-customer-import.png" alt="Power BI Desktop model view with the customer table tooltip showing Storage mode Import" loading="lazy">
+
+                <p>The report side already had a working Overview page from the Desktop Bridge experiment, so the model was live, queryable, and rendering before I asked for anything new.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/overview-page.png" alt="The Contoso Sales Overview report page with KPI cards and four charts rendered from the composite model" loading="lazy">
+
+                <h2>2. The Column That Landed in a Different Table</h2>
+
+                <p>My instruction to the agent named the fact table twice. Referencing this fact table, create one calculated table that describes a new analytical insight on a new Insights page. Inside this fact table, create one calculated column that does the same. Two objects, one page, and the fact table as the anchor for both.</p>
+
+                <p>The agent delivered the page and both objects, and its placement told the story before any documentation did. The calculated table, <code>Monthly Sales Summary</code>, arrived as a disconnected table built from <code>SUMMARIZECOLUMNS</code> over the Import-mode <code>date</code> columns, reaching the fact table only through measures.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/monthly-sales-summary-calc-table.png" alt="Power BI Desktop showing the Monthly Sales Summary calculated table DAX built with SUMMARIZECOLUMNS over date columns and three measures" loading="lazy">
+
+                <p>The calculated column, <code>Margin Tier</code>, did not go into <code>sales</code> at all. It went into the Import-mode <code>product</code> dimension, classifying each product by its list margin.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/margin-tier-calc-column.png" alt="Power BI Desktop showing the Margin Tier calculated column created in the product table with a SWITCH expression" loading="lazy">
+
+                <p>Both visuals rendered with data on the new page, so as an analytical outcome the request succeeded.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/insights-page.png" alt="The Insights page showing Sales Amount by Margin Tier as a bar chart and Sum of Revenue by YearMonth as a column chart" loading="lazy">
+
+                <p>The agent's summary stated its reason plainly: <em>"sales is Direct Lake, and Fabric forbids a calc column inside it or a calc table that references its columns, so I used the supported composite pattern: calc column on an import dimension, calc table via measures only."</em> A one-line explanation from an agent is a claim, not a citation. I wanted to see the restriction with my own eyes, and then find where Microsoft documents it.</p>
+
+                <h2>3. Checking for Myself: The Greyed-Out New Column</h2>
+
+                <p>The Power BI service gave me the fastest confirmation. I opened the semantic model in web modeling, selected the <code>sales</code> table, and looked at the ribbon. <strong>New column</strong> was greyed out. The Properties pane at the same moment showed the reason for the difference between this table and its neighbors: storage mode, Direct Lake.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/service-new-column-greyed.png" alt="Power BI service web modeling with the sales table selected, the New column ribbon button greyed out, and the Properties tooltip showing Storage mode Direct Lake" loading="lazy">
+
+                <p>No error message, no tooltip explanation. The button simply is not available for this table. A UI that quietly disables a button is telling you something is documented somewhere, and that sent me to Microsoft Learn.</p>
+
+                <h2>4. The Fine Print Behind the Word "Available"</h2>
+
+                <p>I had read that calculated columns had come to Direct Lake. The Power BI April 2026 Feature Summary announced, in its "Direct Lake calculated columns and tables (Preview)" section, <a href="https://community.fabric.microsoft.com/t5/Power-BI-Updates-Blog/Power-BI-April-2026-Feature-Summary/ba-p/5173904?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">calculated columns and calculated tables for Direct Lake on OneLake</a> as a preview rolling out to the service. Read quickly, that sounds like the restriction I had just watched the agent route around should no longer exist.</p>
+
+                <p>The precise answer sits in the "Comparison of storage modes" table of the <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Direct Lake overview</a>. The calculated columns row for Direct Lake on OneLake does not say yes. It says <em>"Yes (preview) &ndash; unmaterialized calculated columns with User Context Expression Context only."</em> The "Considerations and limitations" table on the same page goes further, stating that there is <em>"no feature parity between Import and Direct Lake as Standard Expression Context is not supported for Direct Lake calculated columns."</em></p>
+
+                <p>Here's the first <em>aha</em> moment that reshaped my understanding: <strong>the preview does not bring ordinary calculated columns to Direct Lake tables; it brings only the unmaterialized, user-context kind, and a standard calculated column still has to live somewhere else.</strong></p>
+
+                <p><code>Margin Tier</code> is as standard as a calculated column gets. It reads two physical columns of the same table and returns a static label. Nothing about it depends on who is looking at it, so the User Context Expression Context door does not apply, and the only supported homes for it in my model are the Import dimensions. The agent's placement was not a workaround. It was the documented design.</p>
+
+                <p>I wrote about the user-context kind in <a href="user-context-aware-calculated-columns-tmdl-not-rls.html">my user-context-aware calculated columns post</a>, where the <code>expressionContext: userContext</code> property re-evaluates a column per user session. What I had not registered until this experiment is that this pattern is currently the <em>only</em> calculated column a Direct Lake table accepts.</p>
+
+                <p>The calculated table row of the comparison table reads differently. Calculated tables that reference Direct Lake columns or tables are marked <em>"Yes (preview)"</em> for Direct Lake on OneLake, and calculated tables that avoid referencing Direct Lake entirely are supported everywhere. <code>Monthly Sales Summary</code> groups by Import-mode <code>date</code> columns and touches <code>sales</code> only through three measures, so it lives comfortably inside the supported surface.</p>
+
+                <p>Comfortably, that is, until the service tried to refresh it.</p>
+
+                <h2>5. The Refresh That Failed in the Service</h2>
+
+                <p>The next scheduled refresh of the semantic model failed with a data source error I had not seen before.</p>
+
+                <p><em>"We cannot refresh this dataset because the dataset contains calculated tables or calculated columns referring to Direct Lake data source. Please configure the dataset to use an explicit connection with granular access control to access this data source and then try again."</em></p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/refresh-error.png" alt="The Power BI service refresh error dialog stating the dataset contains calculated tables or calculated columns referring to Direct Lake data source" loading="lazy">
+
+                <p>Two details in that sentence earned a second read. Of my two new objects, only one refers to the Direct Lake source at all. <code>Margin Tier</code> reads nothing but Import-mode <code>product</code> columns. The trigger is <code>Monthly Sales Summary</code>, and it never names a <code>sales</code> column directly. It reaches the fact table through <code>[Sales Amount]</code>, <code>[Gross Margin %]</code>, and <code>[Order Count]</code>.</p>
+
+                <p><em>This was the second aha moment.</em> <strong>A calculated table that touches a Direct Lake table only through measures still counts as referring to the Direct Lake data source, and that single reference changes the connection contract for the whole refresh.</strong></p>
+
+                <p>The fix is what the error message asks for. By default, a Direct Lake model reads its source with single sign-on, using the identity of whoever queries it. The "Connection configuration" section of the Microsoft Learn article <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-security-integration?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Integrate Direct Lake security</a> describes the alternative: bind the model's data source to an <strong>explicit cloud connection</strong>, which carries a <strong>fixed identity</strong> instead of the default SSO behavior. In the semantic model settings, under Gateway and cloud connections, I mapped the <code>AzureDataLakeStorage</code> source pointing at OneLake from its default single sign-on entry to a named connection.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/connection-mapping.png" alt="The semantic model settings page with the Gateway and cloud connections section open and the AzureDataLakeStorage source being mapped to a named direct lake connection" loading="lazy">
+
+                <p>The connection itself is nothing exotic. Azure Data Lake Storage Gen2 against <code>onelake.dfs.fabric.microsoft.com</code>, OAuth 2.0 with my own account, and the Entra ID single sign-on checkbox left unticked so the fixed identity does the reading.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/direct-lake-connection-settings.png" alt="The cloud connection settings showing Azure Data Lake Storage Gen2, OAuth 2.0 authentication as Jihwan Kim, and single sign-on disabled" loading="lazy">
+
+                <p>One more habit changed in Desktop along the way. After the calculated table was created, Desktop showed a banner saying one or more calculated tables need to be manually refreshed. In this composite arrangement the calculated table does not recalculate itself when the underlying Delta data moves, so a manual refresh becomes part of the editing rhythm. This is my observation from this session rather than a documented rule I can point to.</p>
+
+                <p>With the explicit connection in place, the refresh history told the ending. The failed run at 09:37 is followed by two completed runs.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/refresh-history-completed.png" alt="The refresh history dialog showing a failed on-demand refresh followed by two completed refreshes after the connection change" loading="lazy">
+
+                <h2>6. What the TMDL Diff Already Knew</h2>
+
+                <p>Back on disk, the whole story is three partitions in three files. The fact table declares its Direct Lake nature in <code>sales.tmdl</code>.</p>
+
+<img src="../images/blog/direct-lake-calculated-columns-where-they-live/sales-tmdl-partition-vscode.png" alt="The sales.tmdl file open in VS Code, with the partition highlighted showing mode directLake and the expressionSource DirectLake - Lakehouse_Contoso" loading="lazy">
+
+                <p>The calculated column lives in <code>product.tmdl</code>, an Import table, exactly where the comparison table says a standard calculated column belongs.</p>
+
+<img src="../images/blog/direct-lake-calculated-columns-where-they-live/product-tmdl-margin-tier-vscode.png" alt="The product.tmdl file open in VS Code, with the Margin Tier calculated column highlighted above the import-mode partition" loading="lazy">
+
+                <p>And the calculated table announces both of its identities at once in <code>Monthly Sales Summary.tmdl</code>: a calculated partition, materialized in Import mode, whose expression reaches the Direct Lake fact table through measures.</p>
+
+<img src="../images/blog/direct-lake-calculated-columns-where-they-live/monthly-sales-summary-tmdl-vscode.png" alt="The Monthly Sales Summary.tmdl file open in VS Code, with the calculated partition highlighted showing mode import and the SUMMARIZECOLUMNS expression" loading="lazy">
+
+                <p>Everything the service showed me is readable here without opening a single dialog. Which table carries the new column, which mode the new table materializes in, and which partition still belongs to the lake.</p>
+
+                <h2>7. From a DevOps Standpoint: Placement Is a Reviewable Decision</h2>
+
+                <p>From a DevOps standpoint, this is foundational, because the constraint turns a modeling choice into something a pull request can catch.</p>
+
+                <h3>Code Review</h3>
+
+                <p>A calculated column is no longer just an expression to review. In a composite model, the file it lands in is an architectural decision. When the diff shows <code>product.tmdl</code> modified and <code>sales.tmdl</code> untouched, a reviewer who knows the storage modes can confirm the placement is deliberate and supported. A diff that tried to add a standard calculated column into a <code>mode: directLake</code> table is a red flag visible in review, before anyone waits for a deployment to fail.</p>
+
+                <h3>Deployment and Configuration</h3>
+
+                <p>The explicit cloud connection that unblocked my refresh lives in the service, not in the PBIP. Nothing in the Git repository records it. A teammate can clone this repository, deploy the identical model definition to another workspace, and hit the same refresh error I did, because the connection mapping is environment configuration that travels outside source control. My deployment notes now carry a line for it: any model whose calculated objects refer to a Direct Lake source needs its OneLake data source mapped to an explicit connection in every workspace it lands in.</p>
+
+                <h3>Validation</h3>
+
+                <p>The refresh history is the verification surface for this class of change. The calculated table renders in Desktop immediately after creation, and a reviewer approving the diff would see nothing wrong there. The failure only appears when the service refreshes the model. A post-deployment refresh check belongs in the pipeline for exactly this reason, and the manual-refresh behavior of the calculated table means data freshness for that one table deserves its own check as well.</p>
+
+                <h2>A Note on Working with AI</h2>
+
+                <p>The agent did more than follow instructions here. Given a loose prompt that named an unsupported placement, it routed the calculated column to a supported table and stated its reason in one line. That line was close to right, and slightly stronger than the documentation: calculated tables referencing Direct Lake columns are in preview for Direct Lake on OneLake, not forbidden outright, and the agent's measures-only design was more conservative than it strictly had to be.</p>
+
+                <p>The verification was mine. I checked the greyed-out ribbon in the service myself, hit the refresh error myself, and worked out the connection fix in the semantic model settings myself. Locating the documentation afterward was AI-assisted again: I asked where the restriction is written down, and the answer came back pointing at the "Comparison of storage modes" table. The agent proposed, I verified, and the documentation settled it.</p>
+
+                <h2>Closing Thoughts</h2>
+
+                <p>This experience left me with a new mental model: <strong>in a composite model, each table's storage mode decides what I can build on it. A Direct Lake table only reads data that already exists in the lakehouse, so a standard calculated column or a calculated table has to be created on the Import side of the model.</strong></p>
+
+                <p>The same rule appeared three times in this experiment: the greyed-out New column button in the service, the calculated column that went into the <code>product</code> table instead of the <code>sales</code> table, and the refresh that asked for an explicit connection. Each one looked like a separate problem at first. After reading the "Comparison of storage modes" table in the <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Direct Lake overview</a>, I understood that all three are the same rule about what a Direct Lake table can and cannot do.</p>
+
+                <p>I hope this helps having fun in exploring Direct Lake composite models, and embracing this new era where an agent's design decisions come with documentation you can check!</p>
+            </div>
+
+            <div class="article-tags-section">
+                <span class="tag" data-tag="Power BI">Power BI</span>
+                <span class="tag" data-tag="Direct Lake">Direct Lake</span>
+                <span class="tag" data-tag="TMDL">TMDL</span>
+                <span class="tag" data-tag="DevOps">DevOps</span>
+                <span class="tag" data-tag="AI">AI</span>
+            </div>
+
+            <div class="sponsor-cta">
+                <div class="sponsor-cta-icon"><span class="material-symbols-outlined">favorite</span></div>
+                <h3>Enjoyed this article?</h3>
+                <p>I build free, open-source Power BI tools: Model Lenz, PBIP Lineage Explorer, and PBIP Documenter. Your sponsorship keeps them maintained and free for everyone.</p>
+                <div class="sponsor-cta-buttons">
+                    <a href="https://github.com/sponsors/JonathanJihwanKim" target="_blank" rel="noopener" class="btn btn-primary">
+                        <span class="material-symbols-outlined">volunteer_activism</span> Become a Sponsor
+                    </a>
+                    <a href="https://buymeacoffee.com/jihwankim" target="_blank" rel="noopener" class="btn btn-outline">
+                        <span class="material-symbols-outlined">coffee</span> Buy me a coffee
+                    </a>
+                </div>
+            </div>
+
+            <nav class="post-navigation">
+                <a href="power-bi-desktop-bridge-claude-edit-verify.html" class="post-nav-link">
+                    <span class="post-nav-label">Previous</span>
+                    <span class="post-nav-title">Letting AI Author a Live Power BI Desktop Report Through the Desktop Bridge</span>
+                </a>
+                <a href="../index.html" class="post-nav-link post-nav-link--next">
+                    <span class="post-nav-label">Back to</span>
+                    <span class="post-nav-title">All posts</span>
+                </a>
+            </nav>
+        </article>
+
+        <aside class="toc-sidebar">
+            <div class="toc-title">On this page</div>
+            <div class="toc-list" id="toc-list"></div>
+        </aside>
+    </main>
+
+    <footer class="site-footer" id="site-footer"></footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" integrity="sha512-rHwBHAxVvWblRZOkJc6/fI+iHFQjWFFGPA6COtU+nGANyEshLN8k+5+rBFFKKDE+UZsEmLoGvcC4hT/xfAtxOQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/lightbox.js"></script>
+    <script src="../js/reading-progress.js"></script>
+    <script src="../js/toc.js"></script>
+    <script src="../js/counter.js"></script>
+</body>
+</html>

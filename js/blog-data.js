@@ -8,6 +8,18 @@
     // Blog posts data - newest first
     var posts = [
         {
+            id: 19,
+            title: "I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead",
+            preview: "A deliberate Desktop Bridge experiment asked AI for a calculated column inside a Direct Lake fact table. The agent routed it to an import dimension, the service greyed out New column, and the next refresh demanded an explicit cloud connection. The documented reason sits in the Direct Lake overview's comparison table: only unmaterialized user-context calculated columns are allowed on Direct Lake tables.",
+            date: "July 4, 2026",
+            sortDate: "2026-07-04",
+            tags: ["Power BI", "Direct Lake", "TMDL", "DevOps", "AI"],
+            url: "posts/direct-lake-calculated-columns-where-they-live.html",
+            featuredImage: "images/blog/direct-lake-calculated-columns-where-they-live/featured.png",
+            readingTime: "10 min read",
+            difficulty: "Intermediate"
+        },
+        {
             id: 18,
             title: "Letting AI Author a Live Power BI Desktop Report Through the Desktop Bridge",
             preview: "The Power BI Desktop Bridge reached preview in June 2026. I opened contoso_project in Desktop, pointed Claude at the documentation through the Skills for Fabric powerbi-authoring plugin, and discovered the bridge has no write API at all. Authoring happens by editing the on-disk TMDL and PBIR files; the bridge's three methods only reload the open session and screenshot it. The edit-on-disk, reload, verify loop turned six measures and an Overview page into a reviewable Git diff.",
