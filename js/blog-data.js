@@ -16,7 +16,7 @@
             tags: ["Power BI", "Direct Lake", "TMDL", "DevOps", "AI"],
             url: "posts/direct-lake-calculated-columns-where-they-live.html",
             featuredImage: "images/blog/direct-lake-calculated-columns-where-they-live/featured.png",
-            readingTime: "10 min read",
+            readingTime: "12 min read",
             difficulty: "Intermediate"
         },
         {

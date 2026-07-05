@@ -62,7 +62,7 @@
             <header class="article-header">
                 <div class="article-meta-top">
                     <span class="difficulty-badge difficulty-badge--intermediate">Intermediate</span>
-                    <span class="reading-time"><span class="material-symbols-outlined">schedule</span> 10 min read</span>
+                    <span class="reading-time"><span class="material-symbols-outlined">schedule</span> 12 min read</span>
                 </div>
                 <h1 class="article-title">I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead</h1>
                 <div class="article-meta">
@@ -215,6 +215,30 @@
                 <h3>Validation</h3>
 
                 <p>The refresh history is the verification surface for this class of change. The calculated table renders in Desktop immediately after creation, and a reviewer approving the diff would see nothing wrong there. The failure only appears when the service refreshes the model. A post-deployment refresh check belongs in the pipeline for exactly this reason, and the manual-refresh behavior of the calculated table means data freshness for that one table deserves its own check as well.</p>
+
+                <h2>8. One Day Later: Testing the "Yes (preview)" Row Myself</h2>
+
+                <p>One row of the comparison table stayed untested in this experiment. The "Comparison of storage modes" table in the <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Direct Lake overview</a> marks calculated tables that reference Direct Lake columns as <em>"Yes (preview)"</em> for Direct Lake on OneLake, and the agent's <code>Monthly Sales Summary</code> stayed off that path on purpose, reaching the fact table only through measures. The day after publishing this post, I went back to try the direct path. No agent this time. I wrote the TMDL by hand.</p>
+
+                <p>The new table is called <code>Margin Tier by customer</code>, and its expression names two Direct Lake columns outright: <code>SUMMARIZECOLUMNS</code> groups by <code>sales[OrderDate]</code> and <code>sales[CustomerKey]</code>, and a <code>SWITCH</code> over the <code>[Gross Margin %]</code> measure labels each customer-and-order-date pair as High, Mid, or Low Margin. Despite sharing a name with the <code>Margin Tier</code> calculated column that went into the <code>product</code> table, this is a different object at a different grain: that column classifies each product once, while this table classifies every customer-and-order-date combination.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/margin-tier-by-customer-tmdl-vscode.png" alt="The Margin Tier by customer.tmdl file open in VS Code, with the Customer Count measure and the calculated partition highlighted, showing mode import and the SUMMARIZECOLUMNS expression grouping by sales OrderDate and CustomerKey" loading="lazy">
+
+                <p>The TMDL is open about where the columns come from. Each one carries <code>isNameInferred</code> and a <code>sourceColumn</code> pointing straight at the Direct Lake fact table, <code>sales[OrderDate]</code> and <code>sales[CustomerKey]</code>. And the partition line reads exactly like the one in <code>Monthly Sales Summary.tmdl</code>: <code>= calculated</code> with <code>mode: import</code>. <strong>Even when the expression references Direct Lake columns directly, the materialized result lives on the Import side of the model.</strong></p>
+
+                <p>From there I treated it like any other table. I added a <code>Customer Count</code> measure inside it, and a relationship from its <code>OrderDate</code> column to <code>date.Date</code> in <code>relationships.tmdl</code>, so the calculated table participates in the model like a first-class table rather than a disconnected result set.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/relationships-tmdl-margin-tier-vscode.png" alt="The relationships.tmdl file open in VS Code, with the new relationship from the Margin Tier by customer OrderDate column to date.Date highlighted" loading="lazy">
+
+                <p>Then the part I cared about most. I committed the change and synced the workspace through <strong>Fabric Git integration</strong>, and the next on-demand refresh completed. The explicit-connection error did not return, because the mapping I set up after the first failed refresh was still in place, and this table needs it more than <code>Monthly Sales Summary</code> ever did: it refers to the Direct Lake source through named columns, not just through measures.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/refresh-history-git-sync-completed.png" alt="The refresh history dialog showing a completed on-demand refresh after the workspace sync, following earlier entries via the XMLA endpoint" loading="lazy">
+
+                <p>On the report side, a matrix on the Insights page reads the new table through its relationship, breaking <code>Customer Count</code> down by the <code>date</code> table's <code>YearMonthShort</code> and the new <code>Margin Tier</code> column.</p>
+
+                <img src="../images/blog/direct-lake-calculated-columns-where-they-live/insights-page-margin-tier-matrix.png" alt="The Insights page in the Power BI service with a matrix highlighted showing Customer Count by YearMonthShort and margin tier" loading="lazy">
+
+                <p>The preview row does what it says. A calculated table can name Direct Lake columns in its expression, materialize in Import mode, carry its own measure, and hold a relationship to another table, and the service refreshes all of it as long as the explicit connection is in place. The agent's measures-only design was a choice, not a requirement.</p>
 
                 <h2>A Note on Working with AI</h2>
 
