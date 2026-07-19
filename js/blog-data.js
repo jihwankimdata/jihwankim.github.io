@@ -8,6 +8,18 @@
     // Blog posts data - newest first
     var posts = [
         {
+            id: 20,
+            title: "Direct Lake vs Import: Building the Same Semantic Model Twice to Decide for Myself",
+            preview: "I wanted to experiment with the storage-mode decision myself, so I built the same Contoso model twice against the same lakehouse, one fact table in Direct Lake and one in import mode, and compared them with DAX Studio server timings, column residency temperatures from INFO.STORAGETABLECOLUMNSEGMENTS, and a TMDL diff. The semantic difference came down to one partition block, but the partition does not travel alone.",
+            date: "July 19, 2026",
+            sortDate: "2026-07-19",
+            tags: ["Power BI", "Direct Lake", "TMDL", "DAX", "DevOps"],
+            url: "posts/direct-lake-vs-import-decision.html",
+            featuredImage: "images/blog/direct-lake-vs-import-decision/featured.png",
+            readingTime: "7 min read",
+            difficulty: "Intermediate"
+        },
+        {
             id: 19,
             title: "I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead",
             preview: "A deliberate Desktop Bridge experiment asked AI for a calculated column inside a Direct Lake fact table. The agent routed it to an import dimension, the service greyed out New column, and the next refresh demanded an explicit cloud connection. The documented reason sits in the Direct Lake overview's comparison table: only unmaterialized user-context calculated columns are allowed on Direct Lake tables.",

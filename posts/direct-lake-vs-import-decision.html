@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="I built the same Contoso semantic model twice, once with the sales fact table in Direct Lake and once fully in import mode, then compared them with DAX Studio server timings, column residency temperatures, and a TMDL diff. The semantic difference came down to one partition block, but the partition does not travel alone.">
+    <meta name="keywords" content="Direct Lake, Import mode, storage mode, TMDL, DAX Studio, server timings, INFO.STORAGETABLECOLUMNSEGMENTS, column temperature, Power BI, Microsoft Fabric, DevOps, semantic model">
+    <meta name="author" content="Jihwan Kim">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.workers.dev; frame-src 'self'">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:title" content="Direct Lake vs Import: Building the Same Semantic Model Twice to Decide for Myself | Jihwan Kim">
+    <meta property="og:description" content="I built the same Contoso semantic model twice against the same lakehouse, one sales fact table in Direct Lake and one in import mode, and measured the difference: DAX Studio server timings, column residency temperatures, and a TMDL diff.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://powerbimvp.com/posts/direct-lake-vs-import-decision.html">
+    <meta property="og:image" content="https://powerbimvp.com/images/blog/direct-lake-vs-import-decision/featured.png">
+    <meta property="og:image:alt" content="A folk-art illustration of two nearly identical oxen facing each other, one warm-toned with a red stripe and one cool-toned with a teal stripe, suggesting the same semantic model built twice in two storage modes">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Direct Lake vs Import: Building the Same Semantic Model Twice to Decide for Myself">
+    <meta name="twitter:description" content="I built the same Contoso semantic model twice against the same lakehouse, one sales fact table in Direct Lake and one in import mode, and measured the difference: DAX Studio server timings, column residency temperatures, and a TMDL diff.">
+    <meta name="twitter:image" content="https://powerbimvp.com/images/blog/direct-lake-vs-import-decision/featured.png">
+    <meta name="twitter:image:alt" content="A folk-art illustration of two nearly identical oxen facing each other, one warm-toned with a red stripe and one cool-toned with a teal stripe, suggesting the same semantic model built twice in two storage modes">
+
+    <title>Direct Lake vs Import: Building the Same Semantic Model Twice to Decide for Myself | Jihwan Kim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/article.css">
+</head>
+<body>
+    <a href="#article" class="skip-link">Skip to content</a>
+    <div class="reading-progress" id="reading-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+    <div class="lightbox-overlay" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Close image viewer">
+            <span class="material-symbols-outlined">close</span> Close
+        </button>
+        <img id="lightbox-image" src="" alt="">
+    </div>
+
+    <header class="site-header" id="site-header"></header>
+
+    <main class="article-layout" id="article">
+        <div class="toc-mobile">
+            <button class="toc-mobile-toggle" id="toc-mobile-toggle">
+                On this page <span class="material-symbols-outlined">expand_more</span>
+            </button>
+            <div class="toc-mobile-content" id="toc-mobile-content">
+                <div id="toc-mobile-list"></div>
+            </div>
+        </div>
+
+        <article>
+            <a href="../index.html" class="back-link">
+                <span class="material-symbols-outlined">arrow_back</span> All posts
+            </a>
+
+            <header class="article-header">
+                <div class="article-meta-top">
+                    <span class="difficulty-badge difficulty-badge--intermediate">Intermediate</span>
+                    <span class="reading-time"><span class="material-symbols-outlined">schedule</span> 7 min read</span>
+                </div>
+                <h1 class="article-title">Direct Lake vs Import: Building the Same Semantic Model Twice to Decide for Myself</h1>
+                <div class="article-meta">
+                    <time datetime="2026-07-19">
+                        <span class="material-symbols-outlined">calendar_month</span> July 19, 2026
+                    </time>
+                    <span class="article-meta-separator"></span>
+                    <div class="article-meta-tags">
+                        <span class="tag" data-tag="Power BI">Power BI</span>
+                        <span class="tag" data-tag="Direct Lake">Direct Lake</span>
+                        <span class="tag" data-tag="TMDL">TMDL</span>
+                        <span class="tag" data-tag="DAX">DAX</span>
+                        <span class="tag" data-tag="DevOps">DevOps</span>
+                    </div>
+                    <span class="article-meta-separator"></span>
+                    <span class="article-readers" id="article-reader-count">
+                        <span class="material-symbols-outlined">visibility</span>
+                        <span id="reader-count-number">&mdash;</span> readers
+                        <span class="counter-since">counter started July 19, 2026</span>
+                    </span>
+                </div>
+            </header>
+
+            <img class="featured-image" src="../images/blog/direct-lake-vs-import-decision/featured.png" alt="A folk-art illustration of two nearly identical oxen facing each other on a parchment background, one warm-toned with a red stripe and one cool-toned with a teal stripe, suggesting the same semantic model built twice in two storage modes">
+
+            <div class="article-content">
+
+                <p>In this writing, I want to share how building the same Contoso semantic model twice, once with the fact table in <strong>Direct Lake</strong> mode and once fully in import mode, turned the storage-mode decision into something I can explain with my own numbers.</p>
+
+                <p>The plan was deliberate. I wanted to experiment with the storage-mode decision myself instead of deciding from reading alone. So I took the composite model from <a href="direct-lake-calculated-columns-where-they-live.html">my previous post</a>, built an import-mode twin of it against the same lakehouse, and pointed DAX Studio at both. The question I wanted answered: when everything else is identical, what does the storage-mode decision actually consist of?</p>
+
+                <h2>1. Building the Twin: One Table, Two Partitions</h2>
+
+                <p>My starting point was the <code>directlake_import_composite</code> model from the calculated-columns experiment: a <strong>composite model</strong> whose <code>sales</code> fact table reads its Delta table from <code>Lakehouse_Contoso</code> in Direct Lake mode, with <code>date</code>, <code>product</code>, <code>store</code>, and <code>customer</code> as import dimensions. The twin, <code>contoso_import</code>, keeps every measure, every relationship, and both calculated objects, and switches the fact table to import mode through the lakehouse SQL endpoint.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/model-view-sales-directlake.png" alt="Model view of the composite model with the sales table properties showing Storage mode Direct Lake" loading="lazy">
+
+                <img src="../images/blog/direct-lake-vs-import-decision/model-view-sales-import.png" alt="Model view of the import twin with the sales table properties showing Storage mode Import" loading="lazy">
+
+                <p>Because both models are <strong>Power BI Projects</strong> on disk, the comparison is not a settings dialog. It is a file diff. The two screenshots below show the <code>sales</code> partition in each model's <code>sales.tmdl</code>. The composite model declares an <code>entity</code> partition with <code>mode: directLake</code>, pointing at the shared expression <code>'DirectLake - Lakehouse_Contoso'</code>. The import twin declares an M partition with <code>mode: import</code>, reading the same <code>dbo.sales</code> table through the lakehouse SQL endpoint.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/sales-tmdl-directlake-partition.png" alt="VS Code showing the directLake entity partition in the composite model's sales.tmdl" loading="lazy">
+
+                <img src="../images/blog/direct-lake-vs-import-decision/sales-tmdl-import-partition.png" alt="VS Code showing the import M partition in the import twin's sales.tmdl" loading="lazy">
+
+                <p>Here's the first <em>aha</em> moment that reshaped my understanding: <strong>the semantic difference between the two models is one partition block.</strong> All six measure expressions are identical in both files; <code>Sales Amount</code> is the same <code>SUMX</code> over <code>Quantity</code> and <code>NetPrice</code> in both models, and the same relationships connect the same tables. The raw file diff is noisier than that one block, because building the twin also changed housekeeping metadata: lineage tags, default summarization on the key columns, date format strings. None of that noise touches a measure or a relationship. The one structural difference I already knew about from <a href="direct-lake-calculated-columns-where-they-live.html">the previous post</a> is that the calculated column and calculated table cannot live on a Direct Lake table, which is why both twins keep them on the import side of the model.</p>
+
+                <p>To be precise, the partition block does not travel alone, and I do not treat this as a one-line switch between the two modes. The <code>entity</code> partition points at a shared expression that only the composite model carries in its <code>expressions.tmdl</code>; the "Power Query connectors" section of <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-develop?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Develop Direct Lake semantic models</a> explains that a Direct Lake on OneLake model reads OneLake through the Azure Data Lake Storage connector in exactly this kind of shared expression. The composite's <code>database.tmdl</code> sits at <code>compatibilityLevel</code> 1606 while the import twin sits at 1600, and the "Considerations and limitations" table of the <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Direct Lake overview</a> states that tools must support <code>compatibilityLevel</code> 1604 or higher to work with Direct Lake semantic models. And the import twin keeps a local cached copy of the model and data in <code>.pbi/cache.abf</code>, the file that the ".pbi\cache.abf" section of <a href="https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-dataset?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Power BI Desktop project semantic model folder</a> documents as the locally cached model and data, while the Direct Lake model carries no local data cache at all.</p>
+
+                <p>Same measures, same relationships, same lakehouse. Different partition, and the files around it that the partition depends on.</p>
+
+                <h2>2. Racing the Two Models in DAX Studio</h2>
+
+                <p>For the benchmark I reused the objects the previous experiment created:</p>
+
+<pre><code>EVALUATE
+SUMMARIZECOLUMNS (
+    'date'[YearMonthShort],
+    'Margin Tier by customer'[Margin Tier],
+    "Sales Amount", [Sales Amount]
+)</code></pre>
+
+                <p>I ran it twice against each model with <strong>Server Timings</strong> recording and Clear on Run enabled, so the storage engine cache never answered for a previous run; all four traces show SE Cache at 0%.</p>
+
+                <p>The composite model, with <code>sales</code> in Direct Lake mode, came back in 203 ms on the first run and 188 ms on the second, with the storage engine (SE) taking about 92% of the time and the main scan reporting 172 ms of SE CPU at x0.9 parallelism. The import twin answered in 243 ms on its first run and 107 ms on its second, with its scan burning 734 ms of SE CPU at x3.3 parallelism on the first pass.</p>
+
+                <p>The first two captures below are the <strong>composite model with the Direct Lake fact table</strong>, first run and then second run.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/dax-studio-directlake-run1.png" alt="DAX Studio server timings for the composite model with the Direct Lake fact table, first run, 203 ms total" loading="lazy">
+
+                <img src="../images/blog/direct-lake-vs-import-decision/dax-studio-directlake-run2.png" alt="DAX Studio server timings for the composite model with the Direct Lake fact table, second run, 188 ms total" loading="lazy">
+
+                <p>And these two captures are the <strong>import twin</strong>, first run and then second run.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/dax-studio-import-run1.png" alt="DAX Studio server timings for the import twin, first run, 243 ms total" loading="lazy">
+
+                <img src="../images/blog/direct-lake-vs-import-decision/dax-studio-import-run2.png" alt="DAX Studio server timings for the import twin, second run, 107 ms total" loading="lazy">
+
+                <p>Two details in those panes deserve naming. The import twin's second run was the fastest result on the board, and I did not find a documented explanation for its first-run gap, so 243 ms against 107 ms stays a recorded observation rather than an explained one. On the Direct Lake side, the "Column loading (transcoding)" section of <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-how-it-works?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">How Direct Lake works</a> explains the cost model: column data loads from OneLake only when a query requests a column for the first time, and columns already resident stay in memory for later queries. The parallelism gap between x0.9 and x3.3 is an observation I want to be careful with: I can see it in the trace, but I have not confirmed what drives it, so it stays a question rather than a conclusion in this post.</p>
+
+                <p>On a fact table this size, the honest summary is that both models answer in a fraction of a second. Nobody looking at a report page would notice 80 ms. The decision has to rest on something other than my stopwatch.</p>
+
+                <h2>3. Watching the Columns Load</h2>
+
+                <p>The memory probe uses <code>INFO.STORAGETABLECOLUMNSEGMENTS()</code>. The "Return value" table in its <a href="https://learn.microsoft.com/en-us/dax/info-storagetablecolumnsegments-function-dax?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Microsoft Learn reference</a> documents columns that may indicate whether a segment is pageable, whether it is currently resident, and a temperature reflecting how recently and how often the segment has been accessed; the "Remarks" section adds that the function needs write permission on the semantic model.</p>
+
+<pre><code>EVALUATE
+SELECTCOLUMNS (
+    FILTER (
+        INFO.STORAGETABLECOLUMNSEGMENTS (),
+        SEARCH ( "sales", [TABLE_ID], 1, 0 ) = 1
+    ),
+    "Column", [COLUMN_ID],
+    "IsPageable", [ISPAGEABLE],
+    "IsResident", [ISRESIDENT],
+    "Temperature", [TEMPERATURE],
+    "LastAccessed", [LAST_ACCESSED]
+)</code></pre>
+
+                <p>The sequence on the composite model: run the residency query for a baseline, run the benchmark from section 2, then run the residency query again and compare.</p>
+
+                <p>The baseline already told a story. Every <code>sales</code> column reported <code>IsPageable</code> as True, the columns my earlier DAX Studio runs had touched were resident with small temperatures, and the columns nothing had queried, <code>LineNumber</code>, <code>DeliveryDate</code>, <code>UnitPrice</code>, <code>CurrencyCode</code>, were not resident at all.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/column-segments-directlake-before.png" alt="DAX Studio results of the residency query on the composite model before the benchmark, with Quantity and NetPrice at temperature 0.45" loading="lazy">
+
+                <p>Then I ran the benchmark once and asked again. <code>Quantity</code> and <code>NetPrice</code>, the two columns inside <code>Sales Amount</code>, jumped from a temperature of about 0.45 to about 3.14, and their <code>LastAccessed</code> timestamps moved to the moment of the run. The untouched columns stayed non-resident, and the resident columns the benchmark did not need cooled slightly.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/column-segments-directlake-after.png" alt="DAX Studio results of the residency query on the composite model after the benchmark, with Quantity and NetPrice at temperature 3.14" loading="lazy">
+
+                <p><em>This was the aha moment.</em> The engine heated exactly the two columns behind my measure and nothing else. <code>Sales Amount</code> never appears in this output, because a measure is not stored anywhere; what the storage engine actually reads is <code>Quantity</code> and <code>NetPrice</code>, and the temperature column shows it.</p>
+
+                <p>The import twin answered differently. Running the same query returned blank values for <code>IsPageable</code>, <code>IsResident</code>, <code>Temperature</code>, and <code>LastAccessed</code> on every segment. According to the "Return value" table of the Microsoft Learn reference, these columns are NULL when the paging feature is not supported on the server, and my import twin was running in a local Desktop session. Its output also listed far more segments per column than the composite model, which I suspect is related to the x3.3 parallelism in section 2, though I have not verified that connection.</p>
+
+                <img src="../images/blog/direct-lake-vs-import-decision/column-segments-import.png" alt="DAX Studio results of the residency query on the import twin, with blank paging columns" loading="lazy">
+
+                <p>What I can say from my own trace is that the composite model's Direct Lake table pages columns in and out, and the temperatures track exactly what my queries touch. I am not claiming the import side never loads columns on demand; my local Desktop session simply reported no paging information to compare.</p>
+
+                <p>What separates the two modes in the end sits outside my stopwatch. The opening section of the <a href="https://learn.microsoft.com/en-us/fabric/fundamentals/direct-lake-overview?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Direct Lake overview</a> describes an import refresh as replicating the data into the model, while a Direct Lake refresh copies only metadata, known as framing. Add the modeling limitations I hit in the previous post, and one partition block in the middle.</p>
+
+                <h2>4. From a DevOps Standpoint: The Diff Is the Decision</h2>
+
+                <p>From a DevOps standpoint, this is foundational.</p>
+
+                <p><strong>Version control: the mode choice as a pull request.</strong> Because the storage mode is written into the model definition files, a migration between import and Direct Lake shows up as a reviewable diff: the partition blocks, the shared expression, and the compatibility level all change in files a pull request can display. A reviewer sees exactly which tables change mode, and the measures and relationships prove themselves unchanged by their absence from the diff. The diff is small, but it is not one line, and treating the migration as a reviewed change rather than a quick toggle is exactly the point.</p>
+
+                <p><strong>Validation: the probes become scripts.</strong> Every piece of evidence in this post is a query. The benchmark is a DAX query, and the residency check is a DAX query. A team can keep both in the repository next to the model and rerun them before and after a storage-mode change, so the decision gets re-tested instead of re-debated whenever the fact table grows.</p>
+
+                <h2>5. A Note on Learning with AI</h2>
+
+                <p>I want to be transparent about the division of work here. I ran every experiment myself: I built both models, captured all four DAX Studio traces, and every screenshot comes from my own sessions. AI proposed which probes were worth running and wrote the first version of the <code>INFO.STORAGETABLECOLUMNSEGMENTS()</code> query. AI did not run anything against my models, and it did not build the import twin.</p>
+
+                <h2>Closing Thoughts</h2>
+
+                <p>This experience left me with a new mental model: <strong>storage mode is written in the model definition files, and what is written in files can be measured, diffed, and reviewed.</strong></p>
+
+                <p>The choice between Direct Lake and import still depends on refresh cost and memory behavior on one side, and query behavior and calculated objects on the other. What changed for me is that I now treat the choice as a testable, reviewable change to the model definition files instead of an upfront architectural commitment.</p>
+
+                <p>I hope this helps having fun in building twin models of your own and embracing this new era of measuring before deciding!</p>
+            </div>
+
+            <div class="article-tags-section">
+                <span class="tag" data-tag="Power BI">Power BI</span>
+                <span class="tag" data-tag="Direct Lake">Direct Lake</span>
+                <span class="tag" data-tag="TMDL">TMDL</span>
+                <span class="tag" data-tag="DAX">DAX</span>
+                <span class="tag" data-tag="DevOps">DevOps</span>
+            </div>
+
+            <div class="sponsor-cta">
+                <div class="sponsor-cta-icon"><span class="material-symbols-outlined">favorite</span></div>
+                <h3>Enjoyed this article?</h3>
+                <p>I build free, open-source Power BI tools: Model Lenz, PBIP Lineage Explorer, and PBIP Documenter. Your sponsorship keeps them maintained and free for everyone.</p>
+                <div class="sponsor-cta-buttons">
+                    <a href="https://github.com/sponsors/JonathanJihwanKim" target="_blank" rel="noopener" class="btn btn-primary">
+                        <span class="material-symbols-outlined">volunteer_activism</span> Become a Sponsor
+                    </a>
+                    <a href="https://buymeacoffee.com/jihwankim" target="_blank" rel="noopener" class="btn btn-outline">
+                        <span class="material-symbols-outlined">coffee</span> Buy me a coffee
+                    </a>
+                </div>
+            </div>
+
+            <nav class="post-navigation">
+                <a href="direct-lake-calculated-columns-where-they-live.html" class="post-nav-link">
+                    <span class="post-nav-label">Previous</span>
+                    <span class="post-nav-title">I Asked AI for a Calculated Column in a Direct Lake Table and Got One in an Import Table Instead</span>
+                </a>
+                <a href="../index.html" class="post-nav-link post-nav-link--next">
+                    <span class="post-nav-label">Back to</span>
+                    <span class="post-nav-title">All posts</span>
+                </a>
+            </nav>
+        </article>
+
+        <aside class="toc-sidebar">
+            <div class="toc-title">On this page</div>
+            <div class="toc-list" id="toc-list"></div>
+        </aside>
+    </main>
+
+    <footer class="site-footer" id="site-footer"></footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" integrity="sha512-rHwBHAxVvWblRZOkJc6/fI+iHFQjWFFGPA6COtU+nGANyEshLN8k+5+rBFFKKDE+UZsEmLoGvcC4hT/xfAtxOQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/lightbox.js"></script>
+    <script src="../js/reading-progress.js"></script>
+    <script src="../js/toc.js"></script>
+    <script src="../js/counter.js"></script>
+</body>
+</html>
