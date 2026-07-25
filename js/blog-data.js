@@ -8,6 +8,18 @@
     // Blog posts data - newest first
     var posts = [
         {
+            id: 21,
+            title: "TMDL View on the Web: Following One Browser Edit from the Code Editor to the Git Diff",
+            preview: "TMDL View on the Web brings a TMDL code editor into Power BI web modeling, so I changed exactly one measure in the browser and followed it into the Git repository behind my workspace. The sales.tmdl diff was the minimal one-line change I hoped for, and a second file came along with it: model.tmdl, where the PBI_ProTooling annotation gained TMDLView_Desktop. One edit, two changed files, and a review habit worth keeping.",
+            date: "July 25, 2026",
+            sortDate: "2026-07-25",
+            tags: ["Power BI", "TMDL", "Git", "DevOps"],
+            url: "posts/tmdl-view-on-the-web.html",
+            featuredImage: "images/blog/tmdl-view-on-the-web/featured.png",
+            readingTime: "7 min read",
+            difficulty: "Intermediate"
+        },
+        {
             id: 20,
             title: "Direct Lake vs Import: Building the Same Semantic Model Twice to Decide for Myself",
             preview: "I wanted to experiment with the storage-mode decision myself, so I built the same Contoso model twice against the same lakehouse, one fact table in Direct Lake and one in import mode, and compared them with DAX Studio server timings, column residency temperatures from INFO.STORAGETABLECOLUMNSEGMENTS, and a TMDL diff. The semantic difference came down to one partition block, but the partition does not travel alone.",
