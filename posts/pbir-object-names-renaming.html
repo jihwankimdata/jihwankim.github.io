@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PBIR names every page, visual, and bookmark folder with a twenty-character identifier, which makes pull requests unreadable. I renamed a page and a visual in three separate stages to find out which change actually helps a reviewer, and learned that a report object has two names: one the folder carries for people, one the name property carries for tooling.">
+    <meta name="keywords" content="PBIR, Power BI, enhanced report format, pull request, code review, Git, rename, visual.json, page.json, Copy object name, PBIP, DevOps">
+    <meta name="author" content="Jihwan Kim">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.workers.dev; frame-src 'self'">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta property="og:title" content="Every PBIR Object Has Two Names: Renaming Pages and Visuals So Pull Requests Are Readable | Jihwan Kim">
+    <meta property="og:description" content="A PBIR report object has two names. The folder is what a reviewer reads in a pull request, and the name property is what Power BI and scripts read. I renamed a page and a visual in three stages to find out what happens when only one of them changes.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://powerbimvp.com/posts/pbir-object-names-renaming.html">
+    <meta property="og:image" content="https://powerbimvp.com/images/blog/pbir-object-names-renaming/featured.png">
+    <meta property="og:image:alt" content="A Korean folk art style illustration of people seated beside a row of nearly identical clay jars, where only one jar carries a written label">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Every PBIR Object Has Two Names: Renaming Pages and Visuals So Pull Requests Are Readable">
+    <meta name="twitter:description" content="A PBIR report object has two names. The folder is what a reviewer reads in a pull request, and the name property is what Power BI and scripts read. I renamed a page and a visual in three stages to find out what happens when only one of them changes.">
+    <meta name="twitter:image" content="https://powerbimvp.com/images/blog/pbir-object-names-renaming/featured.png">
+    <meta name="twitter:image:alt" content="A Korean folk art style illustration of people seated beside a row of nearly identical clay jars, where only one jar carries a written label">
+
+    <title>Every PBIR Object Has Two Names: Renaming Pages and Visuals So Pull Requests Are Readable | Jihwan Kim</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" integrity="sha512-vswe+cgvic/XBoF1OcM/TeJ2FW0OofqAVdCZiEYkd6dwGXthvkSFWOoGGJgS2CW70VK5dQM5Oh+7ne47s74VTg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="../css/base.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="../css/components.css">
+    <link rel="stylesheet" href="../css/article.css">
+</head>
+<body>
+    <a href="#article" class="skip-link">Skip to content</a>
+    <div class="reading-progress" id="reading-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+
+    <div class="lightbox-overlay" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Close image viewer">
+            <span class="material-symbols-outlined">close</span> Close
+        </button>
+        <img id="lightbox-image" src="" alt="">
+    </div>
+
+    <header class="site-header" id="site-header"></header>
+
+    <main class="article-layout" id="article">
+        <div class="toc-mobile">
+            <button class="toc-mobile-toggle" id="toc-mobile-toggle">
+                On this page <span class="material-symbols-outlined">expand_more</span>
+            </button>
+            <div class="toc-mobile-content" id="toc-mobile-content">
+                <div id="toc-mobile-list"></div>
+            </div>
+        </div>
+
+        <article>
+            <a href="../index.html" class="back-link">
+                <span class="material-symbols-outlined">arrow_back</span> All posts
+            </a>
+
+            <header class="article-header">
+                <div class="article-meta-top">
+                    <span class="difficulty-badge difficulty-badge--intermediate">Intermediate</span>
+                    <span class="reading-time"><span class="material-symbols-outlined">schedule</span> 8 min read</span>
+                </div>
+                <h1 class="article-title">Every PBIR Object Has Two Names: Renaming Pages and Visuals So Pull Requests Are Readable</h1>
+                <div class="article-meta">
+                    <time datetime="2026-08-09">
+                        <span class="material-symbols-outlined">calendar_month</span> August 9, 2026
+                    </time>
+                    <span class="article-meta-separator"></span>
+                    <div class="article-meta-tags">
+                        <span class="tag" data-tag="Power BI">Power BI</span>
+                        <span class="tag" data-tag="PBIR">PBIR</span>
+                        <span class="tag" data-tag="Git">Git</span>
+                        <span class="tag" data-tag="DevOps">DevOps</span>
+                    </div>
+                    <span class="article-meta-separator"></span>
+                    <span class="article-readers" id="article-reader-count">
+                        <span class="material-symbols-outlined">visibility</span>
+                        <span id="reader-count-number">&mdash;</span> readers
+                        <span class="counter-since">counter started August 9, 2026</span>
+                    </span>
+                </div>
+            </header>
+
+            <img class="featured-image" src="../images/blog/pbir-object-names-renaming/featured.png" alt="A Korean folk art style illustration of people seated beside a row of nearly identical clay jars, where only one jar carries a written label">
+
+            <div class="article-content">
+
+                <p>In this writing, I want to share how renaming one page and one visual inside a PBIR report showed me that a report object has two names, and that they are used by two different readers.</p>
+
+                <p>The plan was deliberate. I already expected the folder name and the <code>name</code> property inside each JSON file to be tracked separately, and I wanted to prove that rather than assume it. So I ran the rename in three stages and changed one thing at a time: the object name on its own, the folder on its own, and then both together. The question I wanted answered was narrow. Which of those three changes actually makes a pull request readable to the person reviewing it?</p>
+
+                <h2>1. Nine Folders, Four Cards, and No Way to Tell Them Apart</h2>
+
+                <p>My Contoso project has a report with two pages. On the canvas they are obvious. The first page is called Overview and carries four cards across the top: Sales Amount, Gross Margin, Gross Margin %, and Order Count.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/desktop-overview-four-cards.png" alt="Contoso Sales Overview page in Power BI Desktop with the four card visuals highlighted" loading="lazy">
+
+                <p>Then I opened the same report in VS Code.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/vscode-page-folder-guid-visuals.png" alt="VS Code showing the page folder named 7d2067367ba69c75a906 containing nine visual folders with identifier names, and page.json showing displayName Overview" loading="lazy">
+
+                <p>The page lives in a folder called <code>7d2067367ba69c75a906</code>. Inside it, nine visual folders, every one of them a twenty-character string. Four of those nine are the cards. Nothing in the folder tree tells me which is which.</p>
+
+                <p>The <code>page.json</code> file does carry a readable value. Its <code>displayName</code> is <code>Overview</code>. But <code>displayName</code> is not what the folder is named after, and the folder is what a reviewer sees first.</p>
+
+                <p><code>pages.json</code> makes the same point more sharply, because it stores nothing but names.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/pages-json-guid-identifiers.png" alt="pages.json showing pageOrder and activePageName as twenty-character identifiers" loading="lazy">
+
+<pre><code class="language-json">{
+  "pageOrder": [
+    "7d2067367ba69c75a906",
+    "a9b8c7d6e5f403122130"
+  ],
+  "activePageName": "a9b8c7d6e5f403122130"
+}</code></pre>
+
+                <p>If a colleague reorders the pages in Desktop and commits, that change shows up as two hex strings swapping position. Nobody can approve that without opening the report.</p>
+
+                <h2>2. What the Documentation Permits, and What It Warns About</h2>
+
+                <p>Microsoft documents this directly. In the <strong>PBIR naming convention</strong> section of the <a href="https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-report?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">Power BI Desktop project report folder article</a>, pages, visuals, and bookmarks by default use their report object name as their file or folder name, and those object names are initially a twenty-character unique identifier. The article uses <code>90c2e07d8e84e7d5c026</code> as its example. The same section says these names can be renamed to friendlier ones.</p>
+
+                <p>That permission comes with three conditions, all in the same section. Renaming the <code>name</code> property is supported but might break external references inside and outside the report. The name must consist of word characters or hyphens. And after renaming any PBIR file or folder, Power BI Desktop has to be restarted, after which it keeps the new names when saving.</p>
+
+                <p>The character rule is the one worth taking seriously, because breaking it fails quietly. Under <strong>Common PBIR errors</strong>, the article answers the scenario <em>"After rename visual or page folder names, my visual or page no longer appears when opening the report."</em> The cause is a name that does not follow the convention, and Desktop then ignores that file or folder and treats it as a private user file. A space in the name is enough to trigger it. <code>Sales_Overview</code> is safe. <code>Sales Overview</code> is not.</p>
+
+                <h2>3. Stage One: Renaming the Page Object Name Only</h2>
+
+                <p>I closed Desktop and edited two files. In <code>page.json</code>, line 3 became <code>"name": "Overview"</code>. In <code>pages.json</code>, the matching entry inside <code>pageOrder</code> became <code>"Overview"</code>.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/page-json-name-overview.png" alt="page.json edited in VS Code so the name property reads Overview" loading="lazy">
+
+                <img src="../images/blog/pbir-object-names-renaming/pages-json-pageorder-overview.png" alt="pages.json edited in VS Code so the pageOrder entry reads Overview" loading="lazy">
+
+                <p>I left the folder alone on purpose. It stayed <code>7d2067367ba69c75a906</code>.</p>
+
+                <p>The Git diff was exactly what I hoped for.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/git-diff-pages-json.png" alt="Git diff of pages.json showing the twenty-character identifier replaced by Overview" loading="lazy">
+
+                <img src="../images/blog/pbir-object-names-renaming/git-diff-page-json.png" alt="Git diff of page.json showing the name property changed from the identifier to Overview" loading="lazy">
+
+                <p>Desktop reopened without any error, and the Overview tab behaved normally.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/desktop-reopened-overview.png" alt="Power BI Desktop reopening the report with the Overview page intact" loading="lazy">
+
+                <p>After committing, the Service rendered the report and listed both pages correctly.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/service-report-pages.png" alt="The report in the Power BI Service with Overview and Insights listed in the Pages pane" loading="lazy">
+
+                <p>Here is what that tells me. The folder was still called <code>7d2067367ba69c75a906</code> while the <code>name</code> inside the file now said <code>Overview</code>, and Power BI was completely fine with it. The folder name and the object name do not have to match. That was the first thing I wanted to know, and it worked in both Desktop and the Service.</p>
+
+                <p>But one problem was still there. Look at the file path shown above the <code>page.json</code> diff. It still reads <code>pages &gt; 7d2067367ba69c75a906 &gt; page.json</code>. <strong>I could now read what changed, but not where it changed.</strong> In a pull request, the list of changed files is the first thing a reviewer looks at, and that list was still full of hex.</p>
+
+                <h2>4. Stage Two: Renaming the Visual Folder Only</h2>
+
+                <p>For the second stage I did the opposite. I picked the Sales Amount card, whose folder was <code>b1c2d3e4f5061728394a</code>, and renamed the folder to <code>Card_SalesAmount</code>. This time I left <code>"name"</code> inside <code>visual.json</code> untouched.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/visual-json-before-guid-folder.png" alt="visual.json for the Sales Amount card before the change, inside the folder named b1c2d3e4f5061728394a" loading="lazy">
+
+                <img src="../images/blog/pbir-object-names-renaming/visual-folder-renamed.png" alt="The visual folder renamed to Card_SalesAmount while the name property inside visual.json still holds the identifier" loading="lazy">
+
+                <p>Before I staged the change, VS Code showed it as a deleted file plus a brand new untracked file, rather than as a rename.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/source-control-delete-untracked.png" alt="VS Code source control showing a deleted file and an untracked file for the same visual" loading="lazy">
+
+                <p>After committing, I wanted to know how Git had recorded it, so I opened the terminal in VS Code and asked, where <code>1f9f57f</code> is the ID of my rename commit:</p>
+
+<pre><code class="language-bash">git show --summary --find-renames 1f9f57f</code></pre>
+
+                <img src="../images/blog/pbir-object-names-renaming/terminal-git-summary-rename.png" alt="VS Code terminal showing Git reporting the change as a rename from the identifier folder to Card_SalesAmount" loading="lazy">
+
+                <p>Git had recorded it as a rename, with the old folder name on the left of the arrow and the new one on the right. The <code>(66%)</code> on the end is what the <a href="https://git-scm.com/docs/git-diff" target="_blank" rel="noopener">git diff documentation</a> calls the similarity index, its measure of how much of the file stayed the same. A rename on its own would have scored higher. Mine came in lower because I had opened the report in Desktop before committing, and Desktop had written its own changes into the same file. The schema version moved from <code>visualContainer/1.4.0</code> to <code>2.11.0</code>, <code>height</code> and <code>width</code> swapped places, and a <code>filterConfig</code> block appeared.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/committed-diff-schema-filterconfig.png" alt="The committed diff at the Card_SalesAmount path showing the schema version change and the new filterConfig block" loading="lazy">
+
+                <p>My rename ended up buried inside a pile of edits I never made.</p>
+
+                <p>That is worth turning into a small rule. <strong>Rename the folder, commit that on its own, and only then open Desktop.</strong> One commit that says one thing is far easier to review than one commit that says three.</p>
+
+                <p>Then I checked the rename from the other direction, using the <em>Copy object name</em> command that the <strong>Copy report object name</strong> section of the <a href="https://learn.microsoft.com/en-us/power-bi/developer/projects/projects-report?wt.mc_id=DP-MVP-5004989" target="_blank" rel="noopener">same article</a> describes. You switch it on once under File, Options and settings, Report settings, and it adds a right-click entry on any report object.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/copy-object-name-menu-before.png" alt="Right-clicking the Sales Amount card in Power BI Desktop and choosing Copy object name" loading="lazy">
+
+                <p>I pasted the result into Notepad.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/notepad-guid-twenty-characters.png" alt="Notepad showing the twenty-character identifier rather than the new folder name, with the character count in the status bar" loading="lazy">
+
+                <p>It gave me <code>b1c2d3e4f5061728394a</code>. Twenty characters, as the status bar confirms. The folder said <code>Card_SalesAmount</code>, but Power BI still handed me the old identifier, because <em>Copy object name</em> reads the <code>name</code> property and I had not touched it.</p>
+
+                <p>This was the <em>aha</em> moment that turned my expectation into a working rule. <strong>The folder name is the one people read in a pull request. The <code>name</code> property is the one Power BI and scripts read. Changing only one of them leaves the job looking finished when it is not.</strong> Stage two is the trap. Everything opens, everything renders, and nothing warns you that half the rename is missing.</p>
+
+                <h2>5. Stage Three: Making the Folder Name and the Object Name Match</h2>
+
+                <p>The third stage was one line. Inside the renamed folder, <code>"name"</code> became <code>"Card_SalesAmount"</code>, so the folder and the property now said the same thing.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/visual-json-name-renamed.png" alt="visual.json with the name property set to Card_SalesAmount inside the matching folder" loading="lazy">
+
+                <img src="../images/blog/pbir-object-names-renaming/working-tree-diff-name-change.png" alt="The working tree diff showing the identifier replaced by Card_SalesAmount in the name property" loading="lazy">
+
+                <p>The commit was one added line and one removed line. Nothing else.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/committed-diff-name-change.png" alt="The committed diff showing a clean single-line name change, with both commits visible in the graph pane" loading="lazy">
+
+                <p>That screenshot is the one I keep coming back to, because the graph pane shows both of my commits together, each with a letter beside the file. The stage two folder rename is marked <strong>R</strong> for renamed. This one is marked <strong>M</strong> for modified. Git saw two different kinds of edit, and it is right about that. Renaming a folder moves a file to a new location. Editing <code>name</code> changes what is written inside it.</p>
+
+                <p>Then I ran <em>Copy object name</em> again.</p>
+
+                <img src="../images/blog/pbir-object-names-renaming/copy-object-name-menu-after.png" alt="Right-clicking the card and choosing Copy object name after the folder and the name property match" loading="lazy">
+
+                <img src="../images/blog/pbir-object-names-renaming/notepad-renamed-sixteen-characters.png" alt="Notepad showing Card_SalesAmount with sixteen characters in the status bar" loading="lazy">
+
+                <p>This time it gave me <code>Card_SalesAmount</code>. Sixteen characters. Watching that count drop from twenty to sixteen is the whole experiment in one detail.</p>
+
+                <h2>6. What Power BI Desktop Did on Its Own</h2>
+
+                <p>Two things happened without me asking, and both mattered more than I expected.</p>
+
+                <p>Desktop saved over the renamed folder and kept my new name. <code>Card_SalesAmount</code> survived a full write, which is what the naming convention section promises for renamed files and folders.</p>
+
+                <p>Then I found this waiting in my working tree:</p>
+
+<pre><code class="language-json">-  "activePageName": "a9b8c7d6e5f403122130"
++  "activePageName": "Overview"</code></pre>
+
+                <p>I did not write that line. Desktop did, during its own save, because Overview was the active page at the time. In my project at least, Desktop now writes my new name back into the file rather than just putting up with it.</p>
+
+                <h2>7. From a DevOps Standpoint: This Is Foundational</h2>
+
+                <p>From a DevOps standpoint, this is foundational, because a report is only reviewable when a reviewer can tell what changed without opening it.</p>
+
+                <p><strong>Code review.</strong> When a pull request touches <code>visuals/Card_SalesAmount/visual.json</code>, the reviewer knows which visual changed before reading a single line. The same change under <code>visuals/b1c2d3e4f5061728394a/visual.json</code> tells them nothing. When a reviewer cannot tell what a file belongs to, what usually happens is that they approve it without really checking it. Readable folder names are what make a real review possible.</p>
+
+                <p><strong>Version control.</strong> Git records a folder rename and a property edit as two different operations, the <strong>R</strong> and the <strong>M</strong> from the screenshot above. Keeping them in separate commits means the history reads like a list of decisions. My stage two commit mixed a rename with a Desktop save and came out at 66% similarity, which still works but is harder to read than it needed to be.</p>
+
+                <p><strong>Automation.</strong> <em>Copy object name</em> is what connects a visual on the canvas to its file in the repository, and the value it gives you is the <code>name</code> property. Any script that finds a visual by its <code>name</code> depends on that same value. If the folder says one thing and <code>name</code> says another, a person browsing the repository and a script searching it will disagree about which visual they are looking at.</p>
+
+                <p>One caution before anyone runs this across a real report. The naming convention section warns that renaming the <code>name</code> property may break references elsewhere. Bookmarks store the visuals they point at, and drillthrough and page tooltips depend on page bindings. My report has no bookmarks, so my three stages never tested that case. On a report that does have them, rename the visual and its bookmark references together, and check that the report still opens before committing.</p>
+
+                <h2>Closing Thoughts</h2>
+
+                <p>This experience left me with a new mental model: <strong>every PBIR object has two names, one that people read and one that software reads, and a rename is only done when I change both.</strong></p>
+
+                <p>The folder name is what a reviewer sees in a pull request. The <code>name</code> property is what Desktop, the Service, and every script look for. Change one without the other and you get a report that opens perfectly and reviews badly, and nothing in the product will tell you.</p>
+
+                <p>The whole change was three files, four lines, and a Desktop restart. For a report heading into a repository where other people will review it, that is a very small price for a file list you can actually read.</p>
+
+                <p>I hope this helps having fun in exploring PBIR object names and embracing this new era of Power BI reports that review like code!</p>
+            </div>
+
+            <div class="article-tags-section">
+                <span class="tag" data-tag="Power BI">Power BI</span>
+                <span class="tag" data-tag="PBIR">PBIR</span>
+                <span class="tag" data-tag="Git">Git</span>
+                <span class="tag" data-tag="DevOps">DevOps</span>
+            </div>
+
+            <div class="sponsor-cta">
+                <div class="sponsor-cta-icon"><span class="material-symbols-outlined">favorite</span></div>
+                <h3>Enjoyed this article?</h3>
+                <p>I build free, open-source Power BI tools: Model Lenz, PBIP Lineage Explorer, and PBIP Documenter. Your sponsorship keeps them maintained and free for everyone.</p>
+                <div class="sponsor-cta-buttons">
+                    <a href="https://github.com/sponsors/JonathanJihwanKim" target="_blank" rel="noopener" class="btn btn-primary">
+                        <span class="material-symbols-outlined">volunteer_activism</span> Become a Sponsor
+                    </a>
+                    <a href="https://buymeacoffee.com/jihwankim" target="_blank" rel="noopener" class="btn btn-outline">
+                        <span class="material-symbols-outlined">coffee</span> Buy me a coffee
+                    </a>
+                </div>
+            </div>
+
+            <nav class="post-navigation">
+                <a href="tmdl-view-on-the-web.html" class="post-nav-link">
+                    <span class="post-nav-label">Previous</span>
+                    <span class="post-nav-title">TMDL View on the Web: Following One Browser Edit from the Code Editor to the Git Diff</span>
+                </a>
+                <a href="../index.html" class="post-nav-link post-nav-link--next">
+                    <span class="post-nav-label">Back to</span>
+                    <span class="post-nav-title">All posts</span>
+                </a>
+            </nav>
+        </article>
+
+        <aside class="toc-sidebar">
+            <div class="toc-title">On this page</div>
+            <div class="toc-list" id="toc-list"></div>
+        </aside>
+    </main>
+
+    <footer class="site-footer" id="site-footer"></footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js" integrity="sha512-7Z9J3l1+EYfeaPKcGXu3MS/7T+w19WtKQY/n+xzmw4hZhJ9tyYmcUS+4QqAlzhicE5LAfMQSF3iFTK9bQdTxXg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js" integrity="sha512-QXFMVAusM85vUYDaNgcYeU3rzSlc+bTV4JvkfJhjxSHlQEo+ig53BtnGkvFTiNJh8D+wv6uWAQ2vJaVmxe8d3w==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js" integrity="sha512-whYhDwtTmlC/NpZlCr6PSsAaLOrfjVg/iXAnC4H/dtiHawpShhT2SlIMbpIhT/IL/NrpdMm+Hq2C13+VKpHTYw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="../js/nav.js"></script>
+    <script src="../js/theme.js"></script>
+    <script src="../js/lightbox.js"></script>
+    <script src="../js/reading-progress.js"></script>
+    <script src="../js/toc.js"></script>
+    <script src="../js/counter.js"></script>
+</body>
+</html>

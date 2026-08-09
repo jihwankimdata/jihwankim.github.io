@@ -8,6 +8,18 @@
     // Blog posts data - newest first
     var posts = [
         {
+            id: 22,
+            title: "Every PBIR Object Has Two Names: Renaming Pages and Visuals So Pull Requests Are Readable",
+            preview: "PBIR names every page and visual folder with a twenty-character identifier, so a pull request full of hex tells a reviewer nothing. I renamed a page and a visual in three separate stages, changing the object name alone, the folder alone, and then both, to find out which one actually helps. Power BI accepts a folder and a name property that disagree, Copy object name keeps handing back the identifier until you fix the property, and Git logs the two edits as different kinds of change.",
+            date: "August 9, 2026",
+            sortDate: "2026-08-09",
+            tags: ["Power BI", "PBIR", "Git", "DevOps"],
+            url: "posts/pbir-object-names-renaming.html",
+            featuredImage: "images/blog/pbir-object-names-renaming/featured.png",
+            readingTime: "8 min read",
+            difficulty: "Intermediate"
+        },
+        {
             id: 21,
             title: "TMDL View on the Web: Following One Browser Edit from the Code Editor to the Git Diff",
             preview: "TMDL View on the Web brings a TMDL code editor into Power BI web modeling, so I changed exactly one measure in the browser and followed it into the Git repository behind my workspace. The sales.tmdl diff was the minimal one-line change I hoped for, and a second file came along with it: model.tmdl, where the PBI_ProTooling annotation gained TMDLView_Desktop. One edit, two changed files, and a review habit worth keeping.",
